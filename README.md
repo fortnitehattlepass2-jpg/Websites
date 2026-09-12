@@ -243,3 +243,96 @@ https://usesienna.vercel.app/?utm_source=ubghub.org&utm_medium=referral&utm_camp
 https://ubghub.org/
 
 https://github.com/Rekulous/PiratedGames
+
+
+
+// ==UserScript==
+// @name         Aippy Web Auto-Follower
+// @namespace    http://tampermonkey.net
+// @version      1.0
+// @description  Automates following users on Aippy desktop site with human-like delays
+// @author       Your Name
+// @match        https://aippy.ai*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // Settings
+    const MIN_DELAY = 4000;  // Minimum wait time (4 seconds)
+    const MAX_DELAY = 9000;  // Maximum wait time (9 seconds)
+    const MAX_FOLLOWS_PER_SESSION = 30; // Safety limit to prevent bans
+
+    let followCount = 0;
+    let isRunning = false;
+
+    // Create a simple control UI on the screen
+    const btn = document.createElement('button');
+    btn.innerHTML = '▶ Start Auto-Follow';
+    btn.style.position = 'fixed';
+    btn.style.bottom = '20px';
+    btn.style.right = '20px';
+    btn.style.zIndex = '99999';
+    btn.style.padding = '12px 20px';
+    btn.style.backgroundColor = '#FF3366';
+    btn.style.color = '#fff';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '5px';
+    btn.style.cursor = 'pointer';
+    btn.style.fontWeight = 'bold';
+    document.body.appendChild(btn);
+
+    btn.addEventListener('click', () => {
+        isRunning = !isRunning;
+        if (isRunning) {
+            btn.innerHTML = '⏸ Stop Auto-Follow';
+            btn.style.backgroundColor = '#33CC66';
+            followCount = 0;
+            processNextFollow();
+        } else {
+            btn.innerHTML = '▶ Start Auto-Follow';
+            btn.style.backgroundColor = '#FF3366';
+        }
+    });
+
+    function getRandomDelay() {
+        return Math.floor(Math.random() * (MAX_DELAY - MIN_DELAY + 1)) + MIN_DELAY;
+    }
+
+    function processNextFollow() {
+        if (!isRunning) return;
+
+        if (followCount >= MAX_FOLLOWS_PER_SESSION) {
+            alert('Safety limit reached! Stopping to prevent account suspension.');
+            btn.click();
+            return;
+        }
+
+        // Find all elements on the page. Aippy uses localized text or classes for buttons.
+        // This targets buttons containing the exact word "Follow"
+        const buttons = Array.from(document.querySelectorAll('button'));
+        const followButton = buttons.find(b => b.textContent.trim() === 'Follow');
+
+        if (followButton) {
+            // Scroll the element into view so the platform registers active screen engagement
+            followButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Click the button after a slight visual delay
+            setTimeout(() => {
+                if (!isRunning) return;
+                followButton.click();
+                followCount++;
+                console.log(`[Aippy Bot] Followed account #${followCount}`);
+
+                // Wait a random human-like delay before searching for the next button
+                const nextDelay = getRandomDelay();
+                setTimeout(processNextFollow, nextDelay);
+            }, 1000);
+        } else {
+            console.log('[Aippy Bot] No Follow buttons found. Try scrolling down or switching pages.');
+            // Retry searching in 3 seconds if none are visible on screen
+            setTimeout(processNextFollow, 3000);
+        }
+    }
+})();
